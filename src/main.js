@@ -9,8 +9,15 @@ import 'element-ui/lib/theme-chalk/index.css';
 Vue.use(ElementUI);
 
 //引入axios
-import Axios from "@/axios/api.request.js";
-Vue.config.$Axios = Axios;
+import http_axios from "axios";
+Vue.prototype.$http = http_axios;
+
+//引入Vue-jsonp
+import VueJsonp from "vue-jsonp"
+Vue.use(VueJsonp);
+
+//引入阿里矢量图标库
+import './assets/icon/iconfont.css'
 
 //这册全局组件
 import columnTable from "@/components/columnTable.vue"

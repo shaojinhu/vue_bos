@@ -5,8 +5,9 @@
                 <template slot="header">
                     <span style="font-weight:bold;">
                         <i class="el-icon-thumb"></i>
-                        欢迎登陆
+                        欢迎登录
                     </span>
+                    <el-link style="float:right;" :underline="false" @click="showMailSendLogin">邮箱重置密码</el-link>
                 </template>
                 <div style="height:100%;width:100%;">
                     <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="60px" class="demo-ruleForm">
@@ -28,8 +29,11 @@
                         </el-col>
                     </el-row>
                 </div>
+                
             </el-card>
         </div>
+
+        <mail-send-login ref="mailSendLogin"></mail-send-login>
     </div>
 </template>
 
@@ -48,7 +52,7 @@ export default {
             }
         };
         var valiPass = (rule, value, callback) => {
-            if (value === '') {
+            if (!value) {
                 return callback(new Error('请输入密码'));
             } else {
                 callback();
@@ -86,7 +90,7 @@ export default {
                                  }
                             }).catch(rep=>{that.$notify({title: '警告',message: "出现错误了",type: 'error'});})
                         }else{
-                            that.$notify({title: '警告',message: res.data.msg,type: 'error'});
+                            that.$message({message:res.data.message,type:"error"});
                         }
                     }).catch(rep=>{that.$notify({title: '警告',message: "出现错误了",type: 'error'});})
                     
@@ -98,10 +102,15 @@ export default {
         },
         //重置表单
         resetForm(formName) {
-            this.$refs[formName].resetFields();
+            // this.$refs[formName].resetFields();
+            this.ruleForm = {};
         },
         //解构mapActions
-        ...mapActions(["actionsLogin","actionsPermission"])
+        ...mapActions(["actionsLogin","actionsPermission"]),
+        showMailSendLogin(){
+            this.$refs.mailSendLogin.target = {};
+            this.$refs.mailSendLogin.dialogFormVisible = true;
+        }
     },
     mounted(){
         //监听首页退出登录的事件，进行友好型提示
@@ -111,6 +120,9 @@ export default {
                 Bus.$off("val");
             }
         })
+    },
+    components:{
+        mailSendLogin:()=>import("@/views/public/sendNumber/mailSendLogin.vue")
     }
 }
 </script>

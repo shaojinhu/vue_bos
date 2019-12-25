@@ -17,8 +17,6 @@ router.beforeEach((to,from,next)=>{
 
   const permission = localDB.takePermission();
   const token = getToken();
-  //console.log(to.name,!token);
-  console.log(!permission);
   if(to.name == "login" && !token){
     console.log("2")
       next(true);

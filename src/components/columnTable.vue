@@ -48,7 +48,8 @@
                 <!-- 按钮部分 -->
                 <template v-if="isHide">
                     <el-table-column
-                        align="center">
+                        align="center"
+                        width="230px">
                         <template slot="header">
                             <span>操作</span>
                         </template>
@@ -60,7 +61,7 @@
                             @click="Edit(scope.$index, scope.row)">修改</el-button>
                             <el-button
                             size="mini"
-                            type="success"
+                            type="danger"
                             icon="el-icon-delete"
                             @click="Delete(scope.$index, scope.row)">删除</el-button>
                         </template>
@@ -73,6 +74,7 @@
             @current-change="handleCurrentChange"
             :current-page="param.page"
             :page-size="param.size"
+            :hide-on-single-page="value"
             :page-sizes="[5, 8, 12, 15]"
             layout="total,sizes,prev, pager, next, jumper"
             :total="param.total">
@@ -84,6 +86,11 @@
 
 export default {
     name:"columnTable",
+    data(){
+        return{
+            value:false
+        }
+    },
     props:{
         //表头数据
         columns:{
@@ -129,20 +136,14 @@ export default {
             type:Function //获得列表数据
         }
     },
-    data(){
-        return {
-
-        }
-    },
     methods:{
         //编辑
         Edit(rowi,row){
-            console.log(row);
             this.handleEdit(row);
         },
         //删除
         Delete(rowi,row){
-            this.handleDelete(rowi,row);
+            this.handleDelete(row);
         },
         //当点击当前行
         rowClick(row,column,event){
@@ -150,7 +151,6 @@ export default {
         },
         //当页容量变化的时候,返回参数为每页的页容量
         handleSizeChange(pageSize){
-            console.log("切换页容量");
             this.param.size = pageSize;
             if(this.param.page == 1){
                 this.listFunc(this.param);
@@ -164,6 +164,13 @@ export default {
     },
     created(){
         this.listFunc(this.param);
+    },
+    watch:{
+        tableData:function(val){
+            if((this.param.total / this.param.size) <= 1){
+                this.value = true;
+            }
+        }
     }
     
 }

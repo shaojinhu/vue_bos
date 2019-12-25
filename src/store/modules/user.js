@@ -21,6 +21,8 @@ const actions = {
                     let token = res.data.data;
                     commit("SET_TOKEN",token);
                     resolve(res);
+                }else{
+                    resolve(res);
                 }
             }).catch(res=>{
                 reject(res)

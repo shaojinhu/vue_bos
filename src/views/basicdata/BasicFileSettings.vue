@@ -1,9 +1,12 @@
 <template>
     <div style="text-align:left;">
         <el-card>
-            <el-row>
-                <el-button @click="isOk()" :plain="true" size="medium" type="success">默认按钮</el-button>
-                <el-button @click="ParentEditOrAdd()" :plain="true" size="medium" type="info">添加档案</el-button>
+            <el-row style="height:40px;line-height:40px;margin-bottom:5px;">
+                <el-button
+                    size="small"
+                    type="success"
+                    icon="el-icon-circle-plus-outline"
+                    @click="ParentEditOrAdd()">添加</el-button>
             </el-row>
             <!-- 父档案 -->
             <columnTable :columns="parentTableColumns" :tableData="parentTableData" 
@@ -14,21 +17,32 @@
                         :param="parentParam"
                         :listFunc="getParentList"></columnTable>
         </el-card>
-        <el-card style="margin-top:5px">
-            <el-row>
-                <el-button :plain="true" size="medium" type="success">默认按钮</el-button>
-                <el-button :plain="true" size="medium" type="info">主要按钮</el-button>
+        <el-card :class="{isShow:isShow}" style="margin-top:5px">
+            <el-row style="height:40px;line-height:40px;margin-bottom:5px;">
+                <el-button
+                    size="small"
+                    type="success"
+                    icon="el-icon-circle-plus-outline"
+                    @click="SubEditOrAdd()">添加</el-button>
             </el-row>
             <!-- 子档案 -->
-            <!-- <columnTable :columns="childrenTableColumns" :tableData="childrenTableData" 
-                         :loading="loading"  :isHide="false"></columnTable> -->
+            <columnTable :columns="childrenTableColumns" 
+                        :tableData="childrenData" 
+                        :loading="loading"  
+                        :isHide="true"
+                        :param="childrenParam"
+                        :handleEdit="SubEditOrAdd"
+                        :handleDelete="SubDelete"
+                        :listFunc="()=>{}"
+                        ></columnTable>
         </el-card>
 
         <basic-file-setting-edit-or-add ref="BasicFileSettingEditOrAdd"></basic-file-setting-edit-or-add>
+        <sub-archive-add-or-edit ref="SubArchiveAddOrEdit"></sub-archive-add-or-edit>
     </div>
 </template>
 <script>
-import { getParentList } from "@/api/basic/archive.js"
+import { getParentList,deletePerentArchive,getSubArchiveByParentId,deleteSubArchive } from "@/api/basic/archive.js"
 export default {
     name:"BasicFileSettings",
     data(){
@@ -38,14 +52,14 @@ export default {
                 {type:'index',label:'序号',align:'center',width:'100'},
                 {prop:'subArchiveName',label:'子档案名称',align:'center'},
                 {prop:'mnemonicCode',label:'助记码',align:'center'},
-                {prop:'mothballed',label:'封存标志',align:'center'},
+                {prop:'seal',label:'封存标志(是否封存)',align:'center',slot:true},
                 {prop:'remark',label:'描述',align:'center'},
                 {prop:'operatingCompany',label:'操作单位',align:'center'},
                 {prop:'operatingTime',label:'操作时间',align:'center'},
                 {prop:'operator',label:'操作人',align:'center'}
             ],
             //子档案分页的参数
-            childrenParam:{total:10,size:5,page:1},
+            childrenParam:{total:0,size:5,page:1},
             //子档案数据
             childrenData:[],
             //父档案的列
@@ -60,44 +74,120 @@ export default {
                 {prop:'operator',label:'操作人',align:'center'},
             ],
             //父档案
-            parentParam:{total:10,size:5,page:1},
+            parentParam:{total:0,size:5,page:1},
             //父档案数据
             parentTableData:[],
             loading:false,
+            //临时存储父档案
+            targetParent:null,
+            //决定是否展示子档案
+            isShow:true
         }
     },
     methods:{
         //父答案的添加和编辑
         ParentEditOrAdd(data){
             if(data == null){
-                console.log("添加");
                 this.$refs.BasicFileSettingEditOrAdd.drawerValue = true;
                 this.$refs.BasicFileSettingEditOrAdd.parentArchive = {};
             }else{
-                console.log("修改",data);
                 this.$refs.BasicFileSettingEditOrAdd.drawerValue = true;
                 this.$refs.BasicFileSettingEditOrAdd.parentArchive = data;
             }
         },
         //父档案的删除
-        ParentDelete(rowi,row){
-            console.log("删除",rowi,row.subArchiveName)
+        ParentDelete(row){
+            this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+               deletePerentArchive(row).then(res=>{
+                if(res.data.code == 10000){
+                    this.$message({message:res.data.message,type:"success"})
+                    this.getParentList(this.parentParam);
+                }else{
+                    this.$message({message:res.data.message,type:"error"})
+                }
+            })
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '已取消删除'
+                });          
+            });
         },
-        //单机父档案的行进行显示子档案
+        //双击父档案的行进行显示子档案
         ParentToChildren(row,column,event){
-            console.log("单机当前行",row,column,event)
+            this.targetParent = row;
+            this.parentParam.parentid = row.id;
+            getSubArchiveByParentId(this.parentParam).then(res=>{
+                console.log(res);
+                if(res.data.code == 10000){
+                    this.childrenData = res.data.data.rows;
+                    this.childrenParam.total = res.data.data.total;
+                }
+            })
+        },
+        getSubArchive(){
+            getSubArchiveByParentId(this.parentParam).then(res=>{
+                console.log(res);
+                if(res.data.code == 10000){
+                    this.childrenData = res.data.data.rows;
+                    this.childrenParam.total = res.data.data.total;
+                }
+            })
         },
         //父档案列表数据
         getParentList(data){
             getParentList(data).then(res=>{
                 if(res.data.code == 10000){
-                    console.log(res);
                     this.parentTableData = res.data.data.rows;
                     this.parentParam.total = res.data.data.total;
                 }else{
                     this.$message({message:res.data.message,type: 'error'});
                 }
             })
+        },
+        //子档案的编辑和添加
+        SubEditOrAdd(data){
+            console.log(data);
+            //首先检查是否选中了父级
+            if(this.targetParent != null){
+                if(data){//修改
+                    this.$refs.SubArchiveAddOrEdit.SubArchive = data;
+                    this.$refs.SubArchiveAddOrEdit.drawerValue = true;
+                    this.$refs.SubArchiveAddOrEdit.targetParent = this.targetParent;
+                }else{//添加
+                    this.$refs.SubArchiveAddOrEdit.SubArchive = {};
+                    this.$refs.SubArchiveAddOrEdit.drawerValue = true;
+                    this.$refs.SubArchiveAddOrEdit.targetParent = this.targetParent;
+                }
+            }else{
+                this.$message({message:"请先双击选择父档案",type:"warning"});
+            }
+        },
+        //子档案的删除
+        SubDelete(row){
+            this.$confirm('此操作将永久删除, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+               deleteSubArchive(row).then(res=>{
+                if(res.data.code == 10000){
+                    this.$message({message:res.data.message,type:"success"})
+                    this.getSubArchive();
+                }else{
+                    this.$message({message:res.data.message,type:"error"})
+                }
+            })
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '已取消删除'
+                });          
+            });
         }
     },
     watch:{
@@ -106,18 +196,29 @@ export default {
             if(val != null){
                 this.loading = false;
             }
+        },
+        //监听子档案是否展示
+        targetParent:function(val){
+            if(val != null){
+                this.isShow = false;
+            }else{
+                this.isShow = true;
+            }
         }
     },
     mounted(){
         
     },
     components:{
-        BasicFileSettingEditOrAdd:()=>import("@/views/basicdata/BasicFileSettings/BasicFileSettingEditOrAdd.vue")
+        BasicFileSettingEditOrAdd:()=>import("@/views/basicdata/BasicFileSettings/BasicFileSettingEditOrAdd.vue"),
+        SubArchiveAddOrEdit:()=>import("@/views/basicdata/BasicFileSettings/SubArchiveAddOrEdit.vue")
     }
 }
 </script>
 <style scoped>
-
+    .isShow{
+        display: none;
+    }
 </style>
 <style>
     .el-card__body{

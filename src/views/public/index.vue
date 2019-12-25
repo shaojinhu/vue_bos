@@ -1,16 +1,21 @@
 <template>
     <div>        
         <el-container style="height:100vh;">
-            <el-header style="height:8vh;background:#8A8A8A;">
+            <el-header style="height:75px;background:#3A3B40;">
                 <el-row>
                     <el-col :span="10">
                         <el-row>
                             <el-col :span="6">
-                                <span style="height:100%;line-height:100%;font-size:22px;color:white;font-weight:bold;">BOS物流管理系统</span>
+                                <div class="logo"></div>
+                                <span style="padding-left:10px;height:100%;line-height:75px;font-size:20px;font-family:'STCaiyun';color:#A98056;font-weight:bold;">BOS</span>
                             </el-col>
                             <el-col :span="12">
-                                <el-tooltip content="展开或关闭菜单" placement="right-start">
-                                    <el-button type="info" icon="el-icon-s-fold" plain circle @click="isCloseOrOpen()"></el-button>
+                                <el-tooltip content="展开或关闭菜单" placement="right">
+                                    <!-- <el-button style="width:50px;backgroung:none;padding:0px;border:0px;" type="info"  plain  @click="isCloseOrOpen()"> -->
+                                        <a href="javascript:;" style="color:white;text-decoration:none;height:30px;width:30px;" @click="isCloseOrOpen()">
+                                            <i style="font-size:25px;" :class="isClass" ></i>
+                                        </a>
+                                    <!-- </el-button> -->
                                 </el-tooltip>
                             </el-col>
                         </el-row>
@@ -26,7 +31,7 @@
                                         个人设置<i class="el-icon-arrow-down el-icon--right"></i>
                                     </span>
                                     <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item>修改密码</el-dropdown-item>
+                                        <el-dropdown-item @click.native="updatePassword()">修改密码</el-dropdown-item>
                                         <el-dropdown-item @click.native="logout()">退出登录</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </el-dropdown>
@@ -36,12 +41,12 @@
                 </el-row>
             </el-header>
             <el-container style="height:92vh;">
-                <el-aside :width="asideWidth" class="tram" style="overflow-x:hidden;overflow-y:hidden;background:#303133;height:92vh;">
+                <el-aside :width="asideWidth" class="tram" style="overflow-x:hidden;overflow-y:hidden;background:#001529;height:92vh;">
                     <!-- 左侧导航栏  :style="{'width':widthNum}" -->
                     <el-menu 
                             style="border:0px;"
                             active-text-color="black"  
-                            background-color="#303133"
+                            background-color="#001529"
                             text-color="white"
                             :collapse="isCollapse"
                             :default-active="menuDefault"
@@ -74,12 +79,13 @@
                             <router-view style="height:100%;text-align:left;line-height:normal;"></router-view>
                         </div>
                     </el-main>
-                    <el-footer height="60" style="background:#5D5D5D;">
-                        <span style="color:white;font-weight:bold;">底部</span>
+                    <el-footer height="60" style="background:#1D1E23;">
+                        <span style="color:white;">Copyright © 2002-2019 石家庄BOS物流有限公司 版权所有　　技术支持：青鸟网络　　ICP备案编号：冀ICP备158301365号</span>
                     </el-footer>
                 </el-container>
             </el-container>
         </el-container>
+        <update-password ref="updatePassword"></update-password>
     </div>
 </template>
 
@@ -87,6 +93,7 @@
 import Bus from "@/utils/bus.js"
 import localDB from "@/utils/localStorage.js"
 import { clearToken } from "@/utils/cookies.js"
+import { Logout } from "@/api/public/logout.js"
 export default {
     name:"inde",
     data(){
@@ -103,7 +110,8 @@ export default {
                 //name 选项卡的name，用于移除该选项卡的参数
                 //content 选项卡的内容,这里作为path
                 ],
-            permissMenu:null
+            permissMenu:null,
+            isClass:"iconfont icon-shousuo"
         }
     },
     methods:{
@@ -111,8 +119,10 @@ export default {
         isCloseOrOpen(){
             if(this.isCollapse==true){
                 this.isCollapse = false;
+                this.isClass = "iconfont icon-shousuo"
             }else{
                 this.isCollapse = true;
+                this.isClass = "iconfont icon-zhankai"
             }
         },
         //添加选项卡的方法,参数为该路由router的对象
@@ -178,6 +188,7 @@ export default {
                 type: 'warning',
                 center: true
             }).then(() => {
+                Logout().then(res=>{})
                 //清空Cookies
                 clearToken();
                 //清空权限
@@ -191,6 +202,10 @@ export default {
                     message: '已取消已取消退出登录'
                 });
             });
+        },
+        //修改密码
+        updatePassword(){
+            this.$refs.updatePassword.dialogFormVisible = true;
         }
     },
     watch:{
@@ -238,13 +253,28 @@ export default {
                 return newArr;
             }
         },
+    },
+    components:{
+        updatePassword:()=>import("@/views/public/sendNumber/updatePassword.vue")
     }
 }
 </script>
 <style scoped>
+    /* logo */
+    .logo{
+        background-image: url("../../assets/logo.png");
+        background-repeat: no-repeat;
+        height:55px;
+        width: 55px;
+        background-size:cover;
+        background-position-x:-23px;
+        background-position-y:0px;
+        float: left;
+        margin-top: 10px;
+    }
     .el-header {
         line-height:80px;
-        background-color: #B3C0D1;
+        background-color: #1D1E23;
     } 
     .el-footer {
     background-color: #B3C0D1;
@@ -255,7 +285,8 @@ export default {
   
   .el-aside {
     background-color: #D3DCE6;
-    color: #333;
+    /* color: #333; */
+    color: #001529;
     text-align: center;
     line-height: 200px;
   }
@@ -327,16 +358,16 @@ export default {
     }
     /* 修改左侧菜单选中的样式 */
     .el-menu--inline .is-active{
-        color:bisque!important;
-        background: #535457!important;
+        color:#FFFFFF!important;
+        background: #003264!important;
     }
     .el-main{
         line-height: normal!important;
     }
     /* 修改菜单悬浮之后的菜单选中样式 */
     .el-menu--popup-right-start .is-active{
-        color:bisque!important;
-        background: #535457!important;
+        color:#FFFFFF!important;
+        background: #003264!important;
     }
     /* 更改选项卡hover效果 */
     .el-tabs__item:hover{

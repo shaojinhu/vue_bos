@@ -194,12 +194,32 @@ export default [
       },
       children:[
         {
+          path: '/systemManagement/permissionManagement',
+          name: 'permissionManagement',
+          component: ()=>import("@/views/systemManagement/permissionManagement.vue"),
+          meta:{
+              icon:"el-icon-user-solid",
+              title:'权限管理',
+              hideInMenu:true,
+          },
+        },
+        {
           path: '/systemManagement/userManagement',
           name: 'userManagement',
           component: ()=>import("@/views/systemManagement/userManagement.vue"),
           meta:{
               icon:"el-icon-location",
               title:'用户管理',
+              hideInMenu:true,
+          },
+        },
+        {
+          path: '/systemManagement/roleManagement',
+          name: 'roleManagement',
+          component: ()=>import("@/views/systemManagement/roleManagement.vue"),
+          meta:{
+              icon:"el-icon-location",
+              title:'角色管理',
               hideInMenu:true,
           },
         }
